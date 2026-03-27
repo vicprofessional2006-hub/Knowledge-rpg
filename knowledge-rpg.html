@@ -1,0 +1,1486 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>KnowledgeRPG</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,400;0,500;1,400&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;1,9..144,300&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0e0e10;--bg2:#16161a;--bg3:#1e1e24;--bg4:#26262e;--bg5:#2e2e38;
+  --b:rgba(255,255,255,0.07);--b2:rgba(255,255,255,0.13);--b3:rgba(255,255,255,0.22);
+  --tx:#e8e6df;--tx2:#9a9890;--tx3:#5a5856;
+  --gold:#c8973a;--gdim:#7a5820;--gbg:rgba(200,151,58,0.10);
+  --teal:#2eb87e;--tdim:#1a6b4a;--tbg:rgba(46,184,126,0.08);
+  --coral:#e05b3a;--cdim:#8a3620;--cbg:rgba(224,91,58,0.08);
+  --blue:#4a9edd;--bdim:#1a4a7a;--bbg:rgba(74,158,221,0.08);
+  --pur:#9b7fe8;--pdim:#4a3a8a;--pbg:rgba(155,127,232,0.08);
+  --r:10px;--rs:6px;
+  --fd:'Fraunces',Georgia,serif;--fm:'DM Mono',monospace;
+}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--tx);font-family:var(--fm);font-size:13px}
+.shell{display:grid;grid-template-rows:48px 1fr;height:100vh}
+
+/* TOPBAR */
+.topbar{display:flex;align-items:center;gap:10px;padding:0 14px;border-bottom:1px solid var(--b);background:var(--bg);z-index:20;overflow:hidden}
+.logo{font-family:var(--fd);font-size:16px;font-weight:500;color:var(--gold);letter-spacing:-0.02em;white-space:nowrap;flex-shrink:0}
+.logo em{color:var(--tx2);font-size:10px;font-style:normal;font-weight:300;margin-left:5px}
+.tbar-stats{display:flex;gap:5px;margin-left:auto;flex-shrink:0}
+.chip{display:flex;align-items:center;gap:4px;padding:3px 7px;border-radius:20px;border:1px solid var(--b);background:var(--bg2);font-size:11px;color:var(--tx2);white-space:nowrap}
+.chip b{color:var(--tx);font-weight:500}
+.dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.dg{background:var(--gold)}.dt{background:var(--teal)}.dc{background:var(--coral)}.db{background:var(--blue)}
+
+/* DEBT CHIP — pulses when > 0 */
+.debt-chip{background:var(--cbg);border-color:var(--cdim);color:var(--coral)}
+.debt-chip b{color:var(--coral)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.55}}
+.debt-chip.hot{animation:pulse 1.8s ease-in-out infinite}
+
+/* LAYOUT */
+.main{display:grid;grid-template-columns:132px 1fr;overflow:hidden}
+.sidenav{border-right:1px solid var(--b);background:var(--bg);display:flex;flex-direction:column;overflow-y:auto;padding:10px 0;flex-shrink:0}
+.ni{display:flex;align-items:center;gap:7px;padding:8px 12px;cursor:pointer;transition:all .15s;font-size:12px;color:var(--tx2);border-left:2px solid transparent;white-space:nowrap;user-select:none}
+.ni:hover{color:var(--tx);background:var(--bg2)}
+.ni.active{color:var(--tx);border-left-color:var(--gold);background:var(--bg2)}
+.ni-ic{font-size:13px;width:16px;text-align:center;flex-shrink:0}
+.ni-badge{margin-left:auto;background:var(--coral);color:#fff;font-size:9px;font-weight:500;padding:1px 5px;border-radius:8px;min-width:16px;text-align:center}
+.nav-sep{height:1px;background:var(--b);margin:6px 10px}
+.content{overflow-y:auto;overflow-x:hidden;min-width:0}
+.page{display:none;padding:18px}
+.page.active{display:block}
+
+/* TYPE */
+.ptitle{font-family:var(--fd);font-size:21px;font-weight:300;color:var(--tx);margin-bottom:3px}
+.psub{font-size:12px;color:var(--tx2);margin-bottom:18px;line-height:1.5}
+.slabel{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--tx3);margin-bottom:8px;margin-top:18px}
+.slabel:first-child{margin-top:0}
+
+/* HINT */
+.hint{display:flex;align-items:flex-start;gap:8px;background:var(--bg2);border:1px solid var(--b);border-left:2px solid var(--gold);border-radius:var(--rs);padding:9px 11px;margin-bottom:14px;font-size:12px;color:var(--tx2);line-height:1.5}
+.hint b{color:var(--tx);font-weight:500}
+.hint-ic{color:var(--gold);flex-shrink:0;margin-top:1px}
+
+/* MISSION PANEL */
+.mission-panel{background:var(--cbg);border:1px solid var(--cdim);border-radius:var(--r);padding:12px 14px;margin-bottom:14px}
+.mission-panel.clear{background:var(--tbg);border-color:var(--tdim)}
+.mission-title{font-size:12px;font-weight:500;color:var(--coral);margin-bottom:6px}
+.mission-panel.clear .mission-title{color:var(--teal)}
+.mission-list{display:flex;flex-direction:column;gap:5px}
+.mission-item{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--tx2);background:var(--bg);border:1px solid var(--b);border-radius:var(--rs);padding:6px 9px}
+.mission-item .mi-icon{flex-shrink:0}
+.mission-item .mi-name{flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.mission-item .mi-go{color:var(--coral);font-size:10px;flex-shrink:0;cursor:pointer;text-decoration:underline}
+.mission-item .mi-go:hover{color:var(--tx)}
+
+/* BUTTONS */
+.btn{padding:7px 13px;border-radius:var(--rs);font-family:var(--fm);font-size:12px;cursor:pointer;border:1px solid transparent;transition:all .15s;font-weight:500;white-space:nowrap}
+.btn-gold{background:var(--gold);color:#0e0e10;border-color:var(--gold)}.btn-gold:hover{opacity:.85}
+.btn-teal{background:var(--teal);color:#0e0e10;border-color:var(--teal)}.btn-teal:hover{opacity:.85}
+.btn-outline{background:transparent;color:var(--tx2);border-color:var(--b2)}.btn-outline:hover{color:var(--tx);background:var(--bg3)}
+.btn-ghost{background:transparent;border:none;color:var(--tx2);cursor:pointer;font-family:var(--fm);font-size:12px;padding:0}.btn-ghost:hover{color:var(--tx)}
+.btn-danger{background:transparent;color:var(--coral);border-color:var(--cdim)}.btn-danger:hover{background:var(--cbg)}
+.btn-sm{padding:4px 9px;font-size:11px}
+.btn-full{width:100%;text-align:center}
+.btn-row{display:flex;gap:7px;margin-top:8px;flex-wrap:wrap}
+
+/* FORMS */
+.fl{font-size:11px;color:var(--tx2);display:block;margin-bottom:3px}
+.fi{width:100%;background:var(--bg);border:1px solid var(--b);border-radius:var(--rs);padding:7px 9px;color:var(--tx);font-family:var(--fm);font-size:12px;outline:none;margin-bottom:9px}
+.fi:focus{border-color:var(--gdim)}
+.fi::placeholder{color:var(--tx3)}
+.fsel{width:100%;background:var(--bg);border:1px solid var(--b);border-radius:var(--rs);padding:7px 9px;color:var(--tx);font-family:var(--fm);font-size:12px;outline:none;margin-bottom:9px;cursor:pointer}
+.fsel:focus{border-color:var(--gdim)}
+.fsel option{background:var(--bg2)}
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.fcard{background:var(--bg2);border:1px solid var(--gdim);border-radius:var(--r);padding:14px;margin-top:9px;animation:fIn .2s ease}
+.fta{width:100%;background:var(--bg);border:1px solid var(--b);border-radius:var(--rs);padding:7px 9px;color:var(--tx);font-family:var(--fm);font-size:12px;outline:none;margin-bottom:9px;resize:vertical;min-height:72px;line-height:1.5}
+.fta:focus{border-color:var(--gdim)}
+.fta::placeholder{color:var(--tx3)}
+
+/* WEIGHT */
+.wv{display:flex;gap:3px;margin:6px 0 3px}
+.wd{width:24px;height:24px;border-radius:5px;background:var(--bg4);display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--tx3);cursor:pointer;border:1px solid var(--b);transition:all .1s;user-select:none}
+.wd:hover{border-color:var(--gdim)}
+.wd.on{background:var(--gbg);border-color:var(--gold);color:var(--gold)}
+.wh{font-size:10px;color:var(--tx3);margin-bottom:9px}
+
+/* POWER BAR */
+.pbar{background:var(--bg2);border:1px solid var(--b);border-radius:var(--r);padding:12px 14px;margin-bottom:14px;display:flex;align-items:center;gap:14px}
+.pnum{font-family:var(--fd);font-size:34px;font-weight:300;color:var(--gold);line-height:1;flex-shrink:0}
+.pmeta{flex:1;min-width:0}
+.plbl{font-size:11px;color:var(--tx2);margin-bottom:5px}
+.ptrack{height:3px;background:var(--bg4);border-radius:2px;overflow:hidden}
+.pfill{height:100%;background:linear-gradient(90deg,var(--gold),var(--teal));border-radius:2px;transition:width .4s ease}
+
+/* INVENTORY */
+.itb{display:flex;gap:7px;margin-bottom:14px}
+.itb input{flex:1;background:var(--bg2);border:1px solid var(--b);border-radius:var(--rs);padding:6px 9px;color:var(--tx);font-family:var(--fm);font-size:12px;outline:none}
+.itb input:focus{border-color:var(--b2)}
+.itb input::placeholder{color:var(--tx3)}
+.igrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(116px,1fr));gap:7px;margin-bottom:14px}
+.icard{background:var(--bg2);border:1px solid var(--b);border-radius:var(--r);padding:11px 9px;cursor:pointer;transition:all .15s;position:relative;animation:fIn .25s ease}
+.icard:hover{border-color:var(--b2);background:var(--bg3)}
+.icard.fruit{border-color:var(--cdim);background:var(--cbg)}
+.icard.pending{box-shadow:0 0 0 1px var(--coral)}
+.icard .ic-icon{font-size:20px;margin-bottom:5px;display:block}
+.icard .ic-name{font-size:11px;font-weight:500;color:var(--tx);line-height:1.3;margin-bottom:2px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.icard .ic-meta{font-size:10px;color:var(--tx3)}
+.icard .ic-w{position:absolute;top:6px;right:6px;background:var(--gbg);color:var(--gold);border:1px solid var(--gdim);border-radius:4px;font-size:10px;font-weight:500;padding:1px 4px}
+.icard.fruit .ic-w{background:var(--cbg);color:var(--coral);border-color:var(--cdim)}
+.icard .ic-debt{position:absolute;top:6px;left:6px;background:var(--coral);color:#fff;border-radius:50%;width:14px;height:14px;font-size:8px;display:flex;align-items:center;justify-content:center;font-weight:500}
+.icard .ic-org{font-size:9px;color:var(--tx3);margin-top:3px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.add-btn{width:100%;padding:10px;background:transparent;border:1px dashed var(--b2);border-radius:var(--r);color:var(--tx2);font-family:var(--fm);font-size:12px;cursor:pointer;transition:all .15s}
+.add-btn:hover{background:var(--bg2);color:var(--tx);border-color:var(--gdim)}
+
+/* LIVING TREE */
+.tree-wrap{background:var(--bg2);border:1px solid var(--b);border-radius:var(--r);padding:10px 12px;margin-bottom:14px}
+.tree-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:7px;font-size:11px;color:var(--tx2)}
+.tree-hdr b{color:var(--tx)}
+#ktree{width:100%;height:210px;display:block;cursor:default}
+
+/* CREATE */
+.ogrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(138px,1fr));gap:7px;margin-bottom:14px}
+.ocard{background:var(--bg2);border:1px solid var(--b);border-radius:var(--r);padding:12px;cursor:pointer;transition:all .15s}
+.ocard:hover:not(.locked){border-color:var(--b2);background:var(--bg3)}
+.ocard.sel{border-color:var(--teal);background:var(--tbg)}
+.ocard.locked{opacity:.3;cursor:default}
+.o-ic{font-size:19px;margin-bottom:5px}
+.o-name{font-size:12px;font-weight:500;color:var(--tx);margin-bottom:3px;line-height:1.3}
+.o-cost{font-size:10px;color:var(--tx3);line-height:1.5}
+.ok{color:var(--teal)}.ono{color:var(--coral)}
+.locked-lbl{display:inline-block;margin-top:3px;background:var(--cbg);color:var(--coral);font-size:9px;padding:2px 4px;border-radius:3px}
+.cpanel{background:var(--bg2);border:1px solid var(--tdim);border-radius:var(--r);padding:14px;animation:fIn .2s ease}
+.cpanel h3{font-family:var(--fd);font-size:15px;font-weight:300;color:var(--tx);margin-bottom:5px}
+.cpanel p{font-size:12px;color:var(--tx2);line-height:1.6;margin-bottom:9px}
+.cxbar{display:flex;gap:3px;margin-bottom:3px}
+.cxd{width:14px;height:3px;border-radius:2px;background:var(--bg4)}
+.cxd.on{background:var(--teal)}
+.cxhint{font-size:10px;color:var(--tx3);margin-bottom:10px}
+.src-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:7px;margin:8px 0 12px}
+.src-chip{background:var(--bg);border:1px solid var(--b);border-radius:var(--rs);padding:8px;cursor:pointer;transition:all .15s;position:relative}
+.src-chip:hover{background:var(--bg3);border-color:var(--b2)}
+.src-chip.sel{background:var(--tbg);border-color:var(--teal)}
+.sc-check{position:absolute;top:6px;right:6px;font-size:10px;color:var(--teal);display:none}
+.src-chip.sel .sc-check{display:block}
+.sc-title{font-size:12px;color:var(--tx);font-weight:500;line-height:1.3;margin-bottom:2px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.sc-meta{font-size:10px;color:var(--tx3)}
+.sc-fruit{border-color:var(--cdim);background:var(--cbg)}
+.sc-fruit.sel{background:var(--tbg);border-color:var(--teal)}
+
+/* LIBRARY */
+.lgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:7px;margin-bottom:14px}
+.bcard{background:var(--bg2);border:1px solid var(--b);border-radius:var(--r);padding:12px;cursor:pointer;transition:all .15s}
+.bcard:hover{border-color:var(--b2);background:var(--bg3)}
+.bt{font-size:12px;font-weight:500;color:var(--tx);margin-bottom:2px;line-height:1.4;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.ba{font-size:11px;color:var(--tx3);margin-bottom:7px}
+.btag{display:inline-block;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:500}
+.t-u{background:var(--bg4);color:var(--tx3)}
+.t-r{background:var(--gbg);color:var(--gold);border:1px solid var(--gdim)}
+.t-d{background:var(--tbg);color:var(--teal);border:1px solid var(--tdim)}
+.bnc{font-size:10px;color:var(--tx3);margin-top:5px}
+.book-detail{display:none}.book-detail.open{display:block}
+.ncard{background:var(--bg2);border:1px solid var(--b);border-radius:var(--r);padding:11px;margin-bottom:7px;cursor:pointer;transition:all .15s}
+.ncard:hover{border-color:var(--b2)}
+.nt{font-size:12px;font-weight:500;color:var(--tx);margin-bottom:3px}
+.np{font-size:11px;color:var(--tx3);line-height:1.5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nd{font-size:10px;color:var(--tx3);margin-top:3px}
+
+/* RULES */
+.rcard{background:var(--bg2);border:1px solid var(--b);border-radius:var(--r);padding:12px 13px;margin-bottom:7px}
+.rcard.earned{border-color:var(--gdim);background:var(--gbg)}
+.rcard.mat{border-color:var(--pdim);background:var(--pbg);border-style:dashed}
+.rtag{display:inline-block;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:500;margin-bottom:5px}
+.rb{background:var(--bg3);color:var(--tx2)}
+.re{background:var(--gbg);color:var(--gold);border:1px solid var(--gdim)}
+.rm{background:var(--pbg);color:var(--pur);border:1px solid var(--pdim)}
+.rtitle{font-size:13px;font-weight:500;color:var(--tx);margin-bottom:3px}
+.rdesc{font-size:12px;color:var(--tx2);line-height:1.6}
+.rori{font-size:11px;color:var(--gold);margin-top:5px}
+
+/* HISTORY */
+.hitem{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--b)}
+.hitem:last-child{border-bottom:none}
+.hdot{width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:4px}
+.hl{background:var(--pur)}.hc{background:var(--teal)}.hr{background:var(--gold)}.hb{background:var(--blue)}
+.ha{font-size:12px;color:var(--tx);font-weight:500;margin-bottom:1px}
+.hd{font-size:11px;color:var(--tx2)}
+.ht{font-size:10px;color:var(--tx3);flex-shrink:0;padding-top:2px}
+
+/* DATA */
+.dsec{background:var(--bg2);border:1px solid var(--b);border-radius:var(--r);padding:13px;margin-bottom:10px}
+.dsec h3{font-size:13px;font-weight:500;color:var(--tx);margin-bottom:5px}
+.dsec p{font-size:12px;color:var(--tx2);margin-bottom:9px;line-height:1.5}
+.titem{background:var(--bg);border:1px solid var(--b);border-radius:var(--rs);padding:9px;margin-bottom:7px}
+.titem .tt{font-size:12px;color:var(--tx);font-weight:500}
+.titem .tm{font-size:10px;color:var(--tx3);margin-top:2px}
+
+/* MODAL */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.65);display:none;align-items:center;justify-content:center;z-index:100;backdrop-filter:blur(3px)}
+.modal-bg.open{display:flex}
+.mbox{background:var(--bg2);border:1px solid var(--b2);border-radius:var(--r);padding:22px;width:92%;max-width:400px;animation:fIn .18s ease;max-height:88vh;overflow-y:auto}
+.mic{font-size:34px;margin-bottom:10px;display:block}
+.mt{font-family:var(--fd);font-size:17px;font-weight:300;margin-bottom:7px}
+.mb{font-size:12px;color:var(--tx2);line-height:1.7;margin-bottom:14px}
+.mb strong{color:var(--tx);font-weight:500}
+.hbox{background:var(--gbg);border:1px solid var(--gdim);border-radius:var(--rs);padding:9px 11px;margin-top:7px;color:var(--gold);font-size:12px}
+.hbox.teal{background:var(--tbg);border-color:var(--tdim);color:var(--teal)}
+
+/* EMPTY */
+.empty{text-align:center;padding:36px 16px;color:var(--tx3)}
+.ei{font-size:32px;margin-bottom:8px}
+.empty p{font-size:12px;line-height:1.6}
+
+/* EXERCISE PAGE */
+.ex-item-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:7px;margin:8px 0 12px}
+.ex-chip{background:var(--bg);border:1px solid var(--b);border-radius:var(--rs);padding:9px;cursor:pointer;transition:all .15s;position:relative}
+.ex-chip:hover{background:var(--bg3);border-color:var(--b2)}
+.ex-chip.sel{background:var(--pbg);border-color:var(--pdim)}
+.ex-chip .ec-check{position:absolute;top:6px;right:6px;font-size:10px;color:var(--pur);display:none}
+.ex-chip.sel .ec-check{display:block}
+.ex-chip .ec-name{font-size:12px;color:var(--tx);font-weight:500;line-height:1.3;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.ex-chip .ec-meta{font-size:10px;color:var(--tx3);margin-top:2px}
+.ex-panel{background:var(--bg2);border:1px solid var(--pdim);border-radius:var(--r);padding:14px;margin-top:12px;animation:fIn .2s ease}
+.ex-panel h3{font-family:var(--fd);font-size:15px;font-weight:300;color:var(--tx);margin-bottom:8px}
+.ex-loading{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--tx2);padding:12px 0}
+@keyframes spin{to{transform:rotate(360deg)}}
+.ex-spinner{width:14px;height:14px;border:2px solid var(--b2);border-top-color:var(--pur);border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0}
+.ex-content{font-size:13px;color:var(--tx);line-height:1.7;white-space:pre-wrap;word-break:break-word}
+.ex-content strong{color:var(--pur);font-weight:500}
+.ex-suggestion{background:var(--pbg);border:1px solid var(--pdim);border-radius:var(--rs);padding:10px 12px;margin-top:10px;font-size:12px;color:var(--pur);line-height:1.6}
+.ex-suggestion b{color:var(--tx);font-weight:500}
+
+/* AI PANEL (inline in exercise page) */
+.ai-panel{background:var(--bg2);border:1px solid var(--b);border-radius:var(--r);padding:14px;margin-bottom:14px}
+.ai-panel-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.ai-panel-hdr h3{font-size:13px;font-weight:500;color:var(--tx);display:flex;align-items:center;gap:6px}
+.ai-dot{width:7px;height:7px;border-radius:50%;background:var(--pur);animation:pulse 2s ease-in-out infinite}
+.ai-insight{border-left:2px solid var(--pdim);padding:6px 0 6px 10px;margin-bottom:8px;font-size:12px;color:var(--tx2);line-height:1.5}
+.ai-insight:last-child{margin-bottom:0}
+.ai-insight b{color:var(--pur);font-weight:500}
+.ai-empty{font-size:12px;color:var(--tx3);text-align:center;padding:12px 0}
+
+@keyframes fIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:2px}::-webkit-scrollbar-thumb:hover{background:var(--b2)}
+
+@media(max-width:520px){
+  .main{grid-template-columns:1fr;grid-template-rows:auto 1fr}
+  .sidenav{flex-direction:row;border-right:none;border-bottom:1px solid var(--b);padding:0;overflow-x:auto;overflow-y:hidden;flex-shrink:0}
+  .ni{padding:8px 10px;border-left:none;border-bottom:2px solid transparent;flex-direction:column;gap:2px;font-size:10px;min-width:52px;justify-content:center;align-items:center}
+  .ni.active{border-left-color:transparent;border-bottom-color:var(--gold)}
+  .ni-ic{width:auto;font-size:15px}
+  .ni-badge{position:absolute;top:4px;right:4px}
+  .ni{position:relative}
+  .tbar-stats{display:none}
+  .igrid,.ogrid,.lgrid,.ex-item-grid{grid-template-columns:1fr 1fr}
+  .frow{grid-template-columns:1fr}
+  .content{overflow-y:auto}
+  .add-btn{display:block}
+  .src-grid{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="logo">KnowledgeRPG <em>galhos &amp; frutos</em></div>
+    <div class="tbar-stats">
+      <div class="chip"><div class="dot dg"></div>Poder: <b id="top-pow">0</b></div>
+      <div class="chip"><div class="dot dt"></div>Ciclos: <b id="top-cycles">0</b></div>
+      <div class="chip debt-chip" id="debt-chip"><div class="dot dc"></div>Débito: <b id="top-debt">0</b></div>
+    </div>
+  </div>
+
+  <div class="main">
+    <!-- SIDENAV -->
+    <nav class="sidenav">
+      <div class="ni active" onclick="nav('inventory')" id="nav-inventory"><span class="ni-ic">🎒</span><span>Inventário</span></div>
+      <div class="ni" onclick="nav('create')" id="nav-create"><span class="ni-ic">⚡</span><span>Criar</span><span class="ni-badge" id="create-badge" style="display:none">0</span></div>
+      <div class="nav-sep"></div>
+      <div class="ni" onclick="nav('exercise')" id="nav-exercise"><span class="ni-ic">🧪</span><span>Exercícios</span></div>
+      <div class="nav-sep"></div>
+      <div class="ni" onclick="nav('library')" id="nav-library"><span class="ni-ic">📚</span><span>Biblioteca</span></div>
+      <div class="nav-sep"></div>
+      <div class="ni" onclick="nav('rules')" id="nav-rules"><span class="ni-ic">📜</span><span>Regras</span></div>
+      <div class="ni" onclick="nav('history')" id="nav-history"><span class="ni-ic">🕰</span><span>Histórico</span></div>
+      <div class="nav-sep"></div>
+      <div class="ni" onclick="nav('data')" id="nav-data"><span class="ni-ic">💾</span><span>Dados</span></div>
+    </nav>
+
+    <!-- CONTENT -->
+    <div class="content">
+
+      <!-- INVENTORY -->
+      <div class="page active" id="page-inventory">
+        <div class="ptitle">Inventário</div>
+        <div class="psub">Galhos e frutos do conhecimento. Itens ramificam — nunca sobem de peso.</div>
+
+        <div id="mission-area"></div>
+
+        <div class="tree-wrap">
+          <div class="tree-hdr"><b>Árvore viva</b><span id="tree-stats" style="color:var(--tx3)">0 nós</span></div>
+          <canvas id="ktree"></canvas>
+        </div>
+
+        <div class="pbar">
+          <div class="pnum" id="pnum">0</div>
+          <div class="pmeta">
+            <div class="plbl">poder total · <span id="pcount">0</span> itens · <span id="pcycles" style="color:var(--teal)">0 ciclos</span></div>
+            <div class="ptrack"><div class="pfill" id="pfill" style="width:0%"></div></div>
+          </div>
+        </div>
+
+        <div class="itb"><input type="text" id="inv-search" placeholder="buscar…" oninput="renderInv()"/></div>
+        <div class="igrid" id="igrid"></div>
+        <button class="add-btn" id="add-item-btn" onclick="toggleFC('add-item-form','add-item-btn')">+ Aprendi algo novo</button>
+        <div class="fcard" id="add-item-form" style="display:none">
+          <div class="hint" style="margin-bottom:12px"><span class="hint-ic">▸</span><div>Seja específico. <b>"Python"</b> é vago — <b>"list comprehensions em Python"</b> é um item real.</div></div>
+          <label class="fl">O que você aprendeu?</label>
+          <input class="fi" type="text" id="f-name" placeholder="Ex: estrutura dos três atos" onkeydown="if(event.key==='Enter')addItem()"/>
+          <div class="frow">
+            <div>
+              <label class="fl">Categoria</label>
+              <select class="fsel" id="f-cat">
+                <option value="concept">💡 Conceito</option>
+                <option value="tool">🔧 Ferramenta</option>
+                <option value="technique">⚡ Técnica</option>
+                <option value="framework">🏗️ Framework</option>
+                <option value="theory">📐 Teoria</option>
+                <option value="skill">🎯 Habilidade</option>
+              </select>
+            </div>
+            <div>
+              <label class="fl">Peso (1–5)</label>
+              <div class="wv" id="wv-add">
+                <div class="wd on" onclick="setW(1,'add')">1</div>
+                <div class="wd" onclick="setW(2,'add')">2</div>
+                <div class="wd" onclick="setW(3,'add')">3</div>
+                <div class="wd" onclick="setW(4,'add')">4</div>
+                <div class="wd" onclick="setW(5,'add')">5</div>
+              </div>
+              <div class="wh" id="wh-add">noção básica</div>
+            </div>
+          </div>
+          <label class="fl">Originou de qual item? (opcional)</label>
+          <select class="fsel" id="f-origin"><option value="">— nenhum (item raiz)</option></select>
+          <label class="fl">Nota</label>
+          <textarea class="fta" id="f-note" placeholder="O que você entendeu? O que te surpreendeu?"></textarea>
+          <div class="btn-row">
+            <button class="btn btn-gold" onclick="addItem()">Adicionar ao inventário</button>
+            <button class="btn btn-outline" onclick="toggleFC('add-item-form','add-item-btn')">Cancelar</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- CREATE -->
+      <div class="page" id="page-create">
+        <div class="ptitle">Criar conteúdo</div>
+        <div class="psub">Escolha o tipo de output e os galhos que alimentaram a criação. O fruto entra no seu inventário.</div>
+        <div class="hint"><span class="hint-ic">▸</span><div><b>Loop:</b> aprender → item → missão pendente → criar → fruto → ciclo fechado. Cada ciclo fechado conta.</div></div>
+        <div class="ogrid" id="ogrid"></div>
+        <div id="cpanel"></div>
+      </div>
+
+      <!-- LIBRARY -->
+      <div class="page" id="page-library">
+        <div class="ptitle">Biblioteca</div>
+        <div class="psub">Livros são insumos. O output gerado a partir deles é que valida o aprendizado.</div>
+        <div id="lib-list">
+          <div class="lgrid" id="lgrid"></div>
+          <button class="add-btn" id="add-book-btn" onclick="toggleFC('add-book-form','add-book-btn')">+ Adicionar livro</button>
+          <div class="fcard" id="add-book-form" style="display:none">
+            <label class="fl">Título</label>
+            <input class="fi" type="text" id="b-title" placeholder="Ex: Vidas Secas"/>
+            <label class="fl">Autor</label>
+            <input class="fi" type="text" id="b-author" placeholder="Ex: Graciliano Ramos"/>
+            <label class="fl">Status</label>
+            <select class="fsel" id="b-status">
+              <option value="unread">não lido</option>
+              <option value="reading">lendo</option>
+              <option value="read">lido</option>
+            </select>
+            <label class="fl">Nota inicial (opcional)</label>
+            <textarea class="fta" id="b-note" placeholder="Por que este livro?"></textarea>
+            <div class="btn-row">
+              <button class="btn btn-gold" onclick="addBook()">Adicionar</button>
+              <button class="btn btn-outline" onclick="toggleFC('add-book-form','add-book-btn')">Cancelar</button>
+            </div>
+          </div>
+        </div>
+        <div class="book-detail" id="book-detail">
+          <button class="btn-ghost" onclick="closeBookDetail()" style="margin-bottom:14px">← voltar</button>
+          <div id="book-detail-content"></div>
+        </div>
+      </div>
+
+      <!-- EXERCISE -->
+      <div class="page" id="page-exercise">
+        <div class="ptitle">Exercícios</div>
+        <div class="psub">A IA analisa seus itens e gera exercícios sob medida. Não mexe na árvore — é prática pura.</div>
+        <div class="hint"><span class="hint-ic">▸</span><div><b>Como funciona:</b> selecione um ou mais itens, a IA entende os assuntos por trás deles e sugere um exercício em tempo real. Você decide se o resultado vira um fruto.</div></div>
+
+        <div class="ai-panel" id="ai-insights-panel">
+          <div class="ai-panel-hdr">
+            <h3><div class="ai-dot"></div> Inteligência do inventário</h3>
+            <button class="btn btn-outline btn-sm" onclick="refreshInsights()">Analisar</button>
+          </div>
+          <div id="ai-insights-content"><div class="ai-empty">Clique em "Analisar" para ver o que a IA enxerga no seu inventário.</div></div>
+        </div>
+
+        <div class="slabel">selecione itens para o exercício</div>
+        <div class="ex-item-grid" id="ex-item-grid"></div>
+
+        <div id="ex-type-row" style="display:none;margin-bottom:10px">
+          <div class="slabel">tipo de exercício</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap" id="ex-type-btns"></div>
+        </div>
+
+        <div id="ex-panel"></div>
+
+        <div id="ex-to-fruit-area" style="display:none;margin-top:12px">
+          <div class="hint" style="border-color:var(--tdim);background:var(--tbg)"><span class="hint-ic" style="color:var(--teal)">▸</span><div style="color:var(--tx2)">Achou que esse exercício valeu? Você pode transformá-lo em um <b style="color:var(--teal)">fruto</b> no inventário.</div></div>
+          <button class="btn btn-teal" onclick="exToFruit()">Transformar em fruto ↗</button>
+        </div>
+      </div>
+
+      <!-- RULES -->
+      <div class="page" id="page-rules">
+        <div class="ptitle">Regras</div>
+        <div class="psub">Base fixa + conquistadas + maturando.</div>
+        <div id="rules-container"></div>
+      </div>
+
+      <!-- HISTORY -->
+      <div class="page" id="page-history">
+        <div class="ptitle">Histórico</div>
+        <div class="psub">Registro de tudo que aconteceu.</div>
+        <div id="hist-list"></div>
+      </div>
+
+      <!-- DATA -->
+      <div class="page" id="page-data">
+        <div class="ptitle">Dados</div>
+        <div class="psub">Exporte sempre. Nunca perca progresso.</div>
+        <div class="dsec">
+          <h3>Exportar</h3>
+          <p>Salva tudo — itens, frutos, biblioteca, regras, histórico — num arquivo JSON.</p>
+          <button class="btn btn-gold" onclick="exportData()">Exportar como JSON</button>
+        </div>
+        <div class="dsec">
+          <h3>Importar</h3>
+          <p>Carrega um JSON exportado. <strong style="color:var(--coral)">Substitui todos os dados atuais.</strong></p>
+          <input type="file" id="import-file" accept=".json" onchange="importData(event)" style="display:none"/>
+          <button class="btn btn-outline" onclick="document.getElementById('import-file').click()">Selecionar JSON</button>
+        </div>
+        <div class="dsec">
+          <h3>Lixeira</h3>
+          <p>Itens removidos ficam aqui antes de serem apagados definitivamente.</p>
+          <div id="trash-list"></div>
+          <div class="btn-row" style="margin-top:8px">
+            <button class="btn btn-outline btn-sm" onclick="renderTrash()">Atualizar</button>
+            <button class="btn btn-danger btn-sm" onclick="emptyTrash()">Esvaziar</button>
+          </div>
+        </div>
+        <div class="dsec">
+          <h3>Limpar tudo</h3>
+          <p>Apaga tudo permanentemente. Sem volta.</p>
+          <button class="btn btn-danger" onclick="confirmClear()">Limpar todos os dados</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-bg" id="modal" onclick="if(event.target===this)closeModal()">
+  <div class="mbox" id="mbox"></div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// CONSTANTS
+// ═══════════════════════════════════════════════════════════════
+const CATS={
+  concept:{l:'Conceito',i:'💡'},tool:{l:'Ferramenta',i:'🔧'},
+  technique:{l:'Técnica',i:'⚡'},framework:{l:'Framework',i:'🏗️'},
+  theory:{l:'Teoria',i:'📐'},skill:{l:'Habilidade',i:'🎯'}
+};
+const WLBL=['','noção básica','entendi o core','sei usar','domínio sólido','expertise'];
+const OUTPUTS=[
+  {id:'annotation',n:'Anotação estruturada',i:'📝',minI:1,minP:1,d:'Resumo com sua própria arquitetura',cx:1},
+  {id:'thread',n:'Thread / explicação',i:'🧵',minI:2,minP:3,d:'Série de tópicos conectados',cx:2},
+  {id:'snippet',n:'Código funcional',i:'💻',minI:2,minP:4,d:'Script ou função que faz algo real',cx:2},
+  {id:'article',n:'Artigo / ensaio',i:'📄',minI:3,minP:6,d:'Texto aprofundado e publicável',cx:3},
+  {id:'visual',n:'Mapa / diagrama',i:'🗺️',minI:3,minP:5,d:'Visual explicativo de um conceito',cx:3},
+  {id:'project',n:'Projeto completo',i:'🚀',minI:5,minP:12,d:'App, site ou ferramenta real',cx:5},
+  {id:'course',n:'Mini-curso / aula',i:'🎓',minI:6,minP:15,d:'Conteúdo educativo estruturado',cx:5},
+  {id:'tool',n:'Ferramenta publicada',i:'⚙️',minI:7,minP:18,d:'Algo que outras pessoas usam',cx:6},
+];
+const BASE_RULES=[
+  {id:'r1',t:'Aprender = adquirir',d:'Cada coisa nova que você aprende entra no inventário como um item com peso.',tag:'base'},
+  {id:'r2',t:'Criar é obrigatório',d:'Todo item novo gera uma missão pendente. Você não pode só acumular.',tag:'base'},
+  {id:'r3',t:'Itens não somem',d:'Usar um item para criar não o remove. Você o tem para sempre — mas precisa tê-lo para criar.',tag:'base'},
+  {id:'r4',t:'Poder = soma dos pesos',d:'Outputs mais complexos exigem mais poder acumulado.',tag:'base'},
+  {id:'r5',t:'Ciclos fechados contam',d:'Um ciclo = item aprendido + output criado a partir dele. Ciclos fechados ficam gravados na árvore.',tag:'base'},
+  {id:'r6',t:'Itens são galhos, outputs são frutos',d:'Poder cresce em largura, não em altura. Frutos entram no inventário com peso que você decide honestamente.',tag:'base'},
+  {id:'r7',t:'Frutos complexos geram regras',d:'Frutos de complexidade 5+ geram novas regras. O jogo cresce com você.',tag:'base'},
+  {id:'r8',t:'Itens de criação exigem output para peso máximo',d:'Peso 4 ou 5 em um item de criação só se justifica com um fruto concreto associado.',tag:'base'},
+];
+const DEFAULT_MATURING=[
+  {id:'m1',t:'Itens se conectam visualmente',d:'A árvore viva mostra conexões entre galhos e frutos. Uma mecânica de canvas mais profunda está maturando.',tag:'maturing'},
+  {id:'m2',t:'Livros geram outputs, não poder direto',d:'Tag "lido" exige um output associado. O poder vem do fruto, não da leitura.',tag:'maturing'},
+  {id:'m3',t:'Fontes de vídeo merecem registro',d:'Canais e vídeos que mudaram sua trajetória também merecem lugar no sistema.',tag:'maturing'},
+];
+const SK='krpg_v4';
+
+// ═══════════════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════════════
+let G={
+  items:[],outputs:[],rules:[...BASE_RULES],maturing:[...DEFAULT_MATURING],
+  history:[],books:[],trash:[],cycles:0,
+  selOut:null,selSrcs:[],addW:1,craftW:1,curBook:null,
+  exSrcs:[],curExType:null,curExResult:null
+};
+
+// ═══════════════════════════════════════════════════════════════
+// UTILS
+// ═══════════════════════════════════════════════════════════════
+const uid=()=>Date.now()+Math.floor(Math.random()*99991);
+const esc=s=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const fmtT=d=>new Date(d).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+const fmtD=d=>new Date(d).toLocaleDateString('pt-BR');
+const cat=k=>CATS[k]||CATS.concept;
+const alive=()=>G.items.filter(i=>!i.trashed);
+const pow=()=>alive().reduce((s,i)=>s+(i.w||0),0);
+const canDo=o=>alive().length>=o.minI&&pow()>=o.minP;
+// items with no fruit ever made from them
+const pendingItems=()=>alive().filter(i=>!i.fruit&&!hasFruit(i.id));
+const hasFruit=id=>alive().some(f=>f.fruit&&(f.srcs||[]).includes(id));
+const debt=()=>pendingItems().length;
+
+function normalItem(i){
+  return {
+    id:i.id||uid(),n:i.n||i.name||'?',cat:i.cat||'concept',
+    w:i.w||i.weight||1,note:i.note||'',
+    originId:i.originId||null,origin:i.origin||null,
+    date:i.date||new Date().toISOString(),
+    fruit:!!i.fruit,trashed:!!i.trashed,
+    srcs:Array.isArray(i.srcs)?i.srcs:[],
+    outType:i.outType||null
+  };
+}
+const normalBook=b=>({...b,notes:Array.isArray(b.notes)?b.notes:[]});
+
+// ═══════════════════════════════════════════════════════════════
+// PERSIST
+// ═══════════════════════════════════════════════════════════════
+function save(){try{localStorage.setItem(SK,JSON.stringify(G));}catch(e){}}
+function load(){
+  try{
+    const raw=localStorage.getItem(SK);if(!raw)return;
+    const p=JSON.parse(raw);
+    G={...G,...p,
+      rules:p.rules||[...BASE_RULES],maturing:p.maturing||[...DEFAULT_MATURING],
+      items:(p.items||[]).map(normalItem),
+      books:(p.books||[]).map(normalBook),
+      outputs:p.outputs||[],history:p.history||[],
+      trash:(p.trash||[]).map(normalItem),
+      cycles:p.cycles||0,
+      selSrcs:[],selOut:null,addW:p.addW||1,craftW:1,curBook:null
+    };
+  }catch(e){}
+}
+
+// ═══════════════════════════════════════════════════════════════
+// TOPBAR + DEBT
+// ═══════════════════════════════════════════════════════════════
+function updateTop(){
+  const d=debt();
+  document.getElementById('top-pow').textContent=pow();
+  document.getElementById('top-cycles').textContent=G.cycles;
+  document.getElementById('top-debt').textContent=d;
+  const dc=document.getElementById('debt-chip');
+  dc.classList.toggle('hot',d>0);
+  // badge on create nav
+  const badge=document.getElementById('create-badge');
+  if(d>0){badge.textContent=d;badge.style.display='block';}
+  else badge.style.display='none';
+}
+
+// ═══════════════════════════════════════════════════════════════
+// NAV
+// ═══════════════════════════════════════════════════════════════
+function nav(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.ni').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  document.getElementById('nav-'+id).classList.add('active');
+  ({inventory:renderInv,create:renderCreate,exercise:renderExercise,library:renderLib,rules:renderRules,history:renderHist,data:renderTrash})[id]?.();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// FORM TOGGLE
+// ═══════════════════════════════════════════════════════════════
+function toggleFC(formId){
+  const el=document.getElementById(formId);
+  const show=el.style.display==='block';
+  el.style.display=show?'none':'block';
+  if(!show){
+    if(formId==='add-item-form')populateOriginSel();
+    setTimeout(()=>el.querySelector('input,textarea')?.focus(),60);
+  }
+}
+
+function populateOriginSel(){
+  const s=document.getElementById('f-origin');
+  s.innerHTML='<option value="">— nenhum (item raiz)</option>';
+  alive().forEach(i=>{const o=document.createElement('option');o.value=i.id;o.textContent=cat(i.cat).i+' '+i.n;s.appendChild(o);});
+}
+
+// ═══════════════════════════════════════════════════════════════
+// WEIGHT
+// ═══════════════════════════════════════════════════════════════
+function setW(w,ctx){
+  if(ctx==='add')G.addW=w;
+  else if(ctx==='craft')G.craftW=w;
+  else if(ctx==='exf')G.craftW=w;
+  document.querySelectorAll(`#wv-${ctx} .wd`).forEach((d,i)=>d.classList.toggle('on',i<w));
+  const wh=document.getElementById(`wh-${ctx}`);if(wh)wh.textContent=WLBL[w];
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ADD ITEM (galho)
+// ═══════════════════════════════════════════════════════════════
+function addItem(){
+  const n=document.getElementById('f-name').value.trim();
+  if(!n){document.getElementById('f-name').focus();return;}
+  const oid=document.getElementById('f-origin').value||null;
+  const oitem=oid?alive().find(i=>i.id==oid):null;
+  const item=normalItem({
+    id:uid(),n,cat:document.getElementById('f-cat').value,
+    w:G.addW,note:document.getElementById('f-note').value.trim(),
+    originId:oid?+oid:null,origin:oitem?.n||null,date:new Date().toISOString()
+  });
+  G.items.push(item);
+  G.history.unshift({type:'learn',a:'Item adicionado',d:'"'+n+'" entrou no inventário',date:new Date().toISOString()});
+  document.getElementById('f-name').value='';
+  document.getElementById('f-note').value='';
+  document.getElementById('add-item-form').style.display='none';
+  setW(1,'add');save();updateTop();renderInv();
+  openModal(modalItemAdded(item));
+}
+
+// ═══════════════════════════════════════════════════════════════
+// RENDER INVENTORY
+// ═══════════════════════════════════════════════════════════════
+function renderInv(){
+  const p=pow(),cnt=alive().length;
+  document.getElementById('pnum').textContent=p;
+  document.getElementById('pcount').textContent=cnt;
+  document.getElementById('pcycles').textContent=G.cycles+' ciclos';
+  document.getElementById('pfill').style.width=Math.min(100,(p/60)*100)+'%';
+
+  renderMissions();
+
+  const q=(document.getElementById('inv-search')?.value||'').toLowerCase();
+  const list=alive().filter(i=>i.n.toLowerCase().includes(q));
+  const grid=document.getElementById('igrid');
+  if(!list.length){
+    grid.innerHTML=cnt?'<div class="empty" style="grid-column:1/-1"><p>Nenhum item encontrado.</p></div>'
+      :'<div class="empty" style="grid-column:1/-1"><div class="ei">🎒</div><p>Inventário vazio.<br>Adicione seu primeiro item abaixo.</p></div>';
+    schedTree();return;
+  }
+  grid.innerHTML=list.map(it=>{
+    const c=cat(it.cat);
+    const pending=!it.fruit&&!hasFruit(it.id);
+    return `<div class="icard${it.fruit?' fruit':''}${pending?' pending':''}" onclick="showItemDetail(${it.id})">
+      ${pending?'<div class="ic-debt">!</div>':''}
+      <span class="ic-icon">${it.fruit?'🍒':c.i}</span>
+      <div class="ic-name">${esc(it.n)}</div>
+      <div class="ic-meta">${it.fruit?'Fruto':c.l}</div>
+      <div class="ic-w">+${it.w}</div>
+      ${it.origin?`<div class="ic-org">↳ ${esc(it.origin.split(' ').slice(0,3).join(' '))}</div>`:''}
+    </div>`;
+  }).join('');
+  schedTree();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// MISSIONS PANEL
+// ═══════════════════════════════════════════════════════════════
+function renderMissions(){
+  const area=document.getElementById('mission-area');if(!area)return;
+  const pending=pendingItems();
+  if(!pending.length){
+    area.innerHTML=alive().length?`<div class="mission-panel clear"><div class="mission-title">✓ Nenhuma missão pendente</div><div style="font-size:12px;color:var(--teal)">Todos os itens têm ao menos um fruto associado. Continue aprendendo.</div></div>`:''
+    ;return;
+  }
+  const shown=pending.slice(0,4);
+  const more=pending.length-shown.length;
+  area.innerHTML=`<div class="mission-panel">
+    <div class="mission-title">⚡ ${pending.length} missão${pending.length>1?'ões':''} pendente${pending.length>1?'s':''}</div>
+    <div class="mission-list">
+      ${shown.map(it=>`<div class="mission-item">
+        <span class="mi-icon">${cat(it.cat).i}</span>
+        <span class="mi-name">${esc(it.n)}</span>
+        <span class="mi-go" onclick="nav('create')">criar →</span>
+      </div>`).join('')}
+      ${more?`<div style="font-size:11px;color:var(--tx3);padding:4px 0">+${more} item${more>1?'s':''} mais</div>`:''}
+    </div>
+  </div>`;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ITEM DETAIL
+// ═══════════════════════════════════════════════════════════════
+function showItemDetail(id){
+  const it=alive().find(i=>i.id===id);if(!it)return;
+  const c=cat(it.cat);
+  const kids=alive().filter(i=>i.originId===id);
+  const srcs=(it.srcs||[]).map(s=>alive().find(i=>i.id===s)?.n||'#'+s).filter(Boolean);
+  const fruits=alive().filter(f=>f.fruit&&(f.srcs||[]).includes(id));
+  openModal(`
+    <span class="mic">${it.fruit?'🍒':c.i}</span>
+    <div class="mt">${esc(it.n)}</div>
+    <div class="mb">
+      ${it.fruit?`<span style="color:var(--coral)">Fruto</span> · `:`<strong>${c.l}</strong> · `}Peso ${it.w} — ${WLBL[it.w]}
+      ${it.origin?`<br>Originou de: <strong>${esc(it.origin)}</strong>`:''}
+      ${srcs.length?`<br>Galhos-base: <strong>${esc(srcs.join(', '))}</strong>`:''}
+      ${fruits.length?`<br>Frutos gerados: <strong>${esc(fruits.map(f=>f.n).join(', '))}</strong>`:''}
+      ${kids.length?`<br>Ramificações: <strong>${esc(kids.map(k=>k.n).join(', '))}</strong>`:''}
+      ${it.note?`<br><br>${esc(it.note).replace(/\n/g,'<br>')}`:''}
+      ${!it.fruit&&!hasFruit(id)?'<div class="hbox" style="margin-top:10px;border-color:var(--cdim);background:var(--cbg);color:var(--coral)">Missão pendente — ainda não tem fruto associado.</div>':''}
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-danger btn-sm" onclick="trashItem(${id})">Remover</button>
+      <button class="btn btn-outline btn-sm" onclick="closeModal();nav('create')">Criar a partir deste</button>
+      <button class="btn btn-outline btn-sm" onclick="closeModal()">Fechar</button>
+    </div>`);
+}
+
+function trashItem(id){
+  const it=alive().find(i=>i.id===id);if(!it)return;
+  if(!confirm('Mover "'+it.n+'" para a lixeira?'))return;
+  it.trashed=true;
+  G.trash.unshift({...it,trashedAt:new Date().toISOString()});
+  G.history.unshift({type:'learn',a:'Item removido',d:'"'+it.n+'" foi para a lixeira',date:new Date().toISOString()});
+  save();updateTop();closeModal();renderInv();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// LIVING TREE
+// ═══════════════════════════════════════════════════════════════
+let _tt=null;
+function schedTree(){clearTimeout(_tt);_tt=setTimeout(drawTree,90);}
+
+function drawTree(){
+  const cv=document.getElementById('ktree');if(!cv)return;
+  const ctx=cv.getContext('2d');
+  const W=cv.offsetWidth||300,H=210;
+  const dpr=window.devicePixelRatio||1;
+  cv.width=Math.round(W*dpr);cv.height=Math.round(H*dpr);
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.clearRect(0,0,W,H);
+  const items=alive();
+  if(!items.length){
+    ctx.fillStyle='rgba(255,255,255,0.2)';ctx.font='11px DM Mono,monospace';
+    ctx.fillText('Adicione itens para ver a árvore crescer.',14,28);
+    document.getElementById('tree-stats').textContent='0 nós';return;
+  }
+
+  // depth computation
+  const idMap=new Map(items.map(i=>[i.id,i]));
+  const dm=new Map();const vs=new Set();
+  function depth(id){
+    if(dm.has(id))return dm.get(id);if(vs.has(id))return 0;vs.add(id);
+    const it=idMap.get(id);let d=0;
+    if(it){const pp=it.fruit&&it.srcs?.length?it.srcs:(it.originId?[it.originId]:[]);
+      if(pp.length)d=1+Math.max(...pp.map(p=>depth(p)));}
+    vs.delete(id);dm.set(id,d);return d;
+  }
+  items.forEach(i=>depth(i.id));
+
+  const byLvl=new Map();
+  items.forEach(i=>{const d=dm.get(i.id)||0;if(!byLvl.has(d))byLvl.set(d,[]);byLvl.get(d).push(i);});
+  const maxD=Math.max(...byLvl.keys());
+  const lH=Math.max(42,(H-28)/(maxD+1));
+  const pos=new Map();
+
+  [...byLvl.keys()].sort((a,b)=>a-b).forEach(d=>{
+    const arr=byLvl.get(d)||[];
+    const y=22+d*lH;
+    const gap=W/(arr.length+1);
+    arr.forEach((it,idx)=>{
+      let x=gap*(idx+1);
+      const pp=it.fruit&&it.srcs?.length?it.srcs:(it.originId?[it.originId]:[]);
+      const ppos=pp.map(pid=>pos.get(pid)).filter(Boolean);
+      if(ppos.length){x=ppos.reduce((s,p)=>s+p.x,0)/ppos.length+(idx%2===0?-14:14);}
+      x=Math.max(16,Math.min(W-16,x));
+      pos.set(it.id,{x,y});
+    });
+  });
+
+  // edges
+  ctx.lineWidth=1;
+  items.forEach(it=>{
+    const p=pos.get(it.id);if(!p)return;
+    const pp=it.fruit&&it.srcs?.length?it.srcs:(it.originId?[it.originId]:[]);
+    pp.forEach(pid=>{
+      const pp2=pos.get(pid);if(!pp2)return;
+      const isClosed=it.fruit&&hasFruit(pid);
+      ctx.strokeStyle=it.fruit
+        ?( isClosed?'rgba(46,184,126,0.5)':'rgba(224,91,58,0.38)')
+        :'rgba(200,151,58,0.22)';
+      ctx.setLineDash(it.fruit&&!isClosed?[3,3]:[]);
+      ctx.beginPath();
+      // curved bezier for elegance
+      const mx=(pp2.x+p.x)/2;
+      ctx.moveTo(pp2.x,pp2.y+9);
+      ctx.quadraticCurveTo(mx,p.y-lH/2,p.x,p.y-9);
+      ctx.stroke();ctx.setLineDash([]);
+    });
+  });
+
+  // nodes
+  items.forEach(it=>{
+    const p=pos.get(it.id);if(!p)return;
+    const r=Math.max(8,6+(it.w||1)*1.6);
+    const isClosed=it.fruit||hasFruit(it.id);
+    const pending=!it.fruit&&!hasFruit(it.id);
+    ctx.fillStyle=it.fruit
+      ?'rgba(224,91,58,0.18)'
+      :(isClosed?'rgba(46,184,126,0.14)':'rgba(200,151,58,0.12)');
+    ctx.strokeStyle=it.fruit
+      ?'rgba(224,91,58,0.85)'
+      :(isClosed?'rgba(46,184,126,0.85)':'rgba(200,151,58,0.75)');
+    ctx.lineWidth=pending?1.5:1;
+    if(pending){ctx.setLineDash([3,2]);}
+    ctx.beginPath();ctx.arc(p.x,p.y,r,0,Math.PI*2);ctx.fill();ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.font='10px sans-serif';ctx.textAlign='center';
+    ctx.fillText(it.fruit?'🍒':(isClosed?'🌳':'🌱'),p.x,p.y+3.5);
+    ctx.fillStyle='rgba(232,230,223,0.82)';
+    ctx.font='9px DM Mono,monospace';ctx.textAlign='center';
+    const lbl=it.n.length>15?it.n.slice(0,13)+'…':it.n;
+    ctx.fillText(lbl,p.x,p.y+r+10);
+  });
+
+  const total=items.length,fruits=items.filter(i=>i.fruit).length,branches=total-fruits;
+  document.getElementById('tree-stats').textContent=`${branches} galho${branches!==1?'s':''} · ${fruits} fruto${fruits!==1?'s':''}`;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// CREATE / OUTPUT
+// ═══════════════════════════════════════════════════════════════
+function renderCreate(){
+  const p=pow(),cnt=alive().length;
+  document.getElementById('ogrid').innerHTML=OUTPUTS.map(o=>{
+    const ok=canDo(o),sel=G.selOut===o.id;
+    return `<div class="ocard${ok?'':' locked'}${sel?' sel':''}" onclick="${ok?`selOut('${o.id}')`:''}" title="${esc(o.d)}">
+      <div class="o-ic">${o.i}</div>
+      <div class="o-name">${esc(o.n)}</div>
+      <div class="o-cost">
+        <span class="${cnt>=o.minI?'ok':'ono'}">${o.minI} itens</span> ·
+        <span class="${p>=o.minP?'ok':'ono'}">poder ${o.minP}</span>
+      </div>
+      ${ok?'':'<div class="locked-lbl">bloqueado</div>'}
+    </div>`;
+  }).join('');
+
+  const panel=document.getElementById('cpanel');
+  if(!G.selOut){panel.innerHTML='';return;}
+  const o=OUTPUTS.find(x=>x.id===G.selOut);
+  const dots=Array(6).fill(0).map((_,i)=>`<div class="cxd${i<o.cx?' on':''}"></div>`).join('');
+
+  // pending items first, then others
+  const pending=pendingItems();
+  const others=alive().filter(i=>!pending.includes(i));
+  const allForSrc=[...pending,...others];
+
+  const srcHTML=allForSrc.length
+    ?`<div class="src-grid">${allForSrc.map(it=>{
+        const sel=G.selSrcs.includes(it.id);
+        const isPending=!it.fruit&&!hasFruit(it.id);
+        return `<div class="src-chip${sel?' sel':''}${it.fruit?' sc-fruit':''}" onclick="toggleSrc(${it.id})">
+          <div class="sc-check">✓</div>
+          <div class="sc-title">${isPending?'⚡ ':''}${esc(it.n)}</div>
+          <div class="sc-meta">${cat(it.cat).l}${it.fruit?' · Fruto':''} · +${it.w}</div>
+        </div>`;}).join('')}</div>`
+    :'<div class="empty" style="padding:14px 0"><p>Adicione itens primeiro.</p></div>';
+
+  panel.innerHTML=`<div class="cpanel">
+    <h3>${o.i} ${esc(o.n)}</h3>
+    <p>${esc(o.d)}</p>
+    <div class="cxbar">${dots}</div>
+    <div class="cxhint">complexidade ${o.cx}/6</div>
+    <div class="slabel">galhos-base — escolha os itens que alimentaram esta criação</div>
+    ${srcHTML}
+    <div class="btn-row">
+      <button class="btn btn-teal" onclick="registerOutput('${o.id}')">✓ Registrar fruto</button>
+      <button class="btn btn-outline" onclick="clearSel()">Cancelar</button>
+    </div>
+  </div>`;
+}
+
+function selOut(id){G.selOut=G.selOut===id?null:id;G.selSrcs=[];renderCreate();}
+function toggleSrc(id){const i=G.selSrcs.indexOf(id);i>=0?G.selSrcs.splice(i,1):G.selSrcs.push(id);renderCreate();}
+function clearSel(){G.selOut=null;G.selSrcs=[];renderCreate();}
+
+function registerOutput(typeId){
+  const o=OUTPUTS.find(x=>x.id===typeId);
+  const srcs=G.selSrcs.filter(id=>alive().find(i=>i.id===id));
+  if(alive().length&&!srcs.length){alert('Escolhe ao menos um galho-base.');return;}
+  const srcNames=srcs.map(id=>alive().find(i=>i.id===id)?.n).filter(Boolean);
+
+  // open craft modal — user names and weights the fruit
+  G._pendingCraft={typeId,srcs,srcNames,cx:o.cx,oIcon:o.i,oName:o.n};
+  openModal(craftModal(o,srcNames));
+}
+
+let _pendingCraft=null;
+function craftModal(o,srcNames){
+  return `
+    <span class="mic">${o.i}</span>
+    <div class="mt">Nomear o fruto</div>
+    <div class="mb">
+      Este output vai entrar no seu inventário como um <strong>fruto</strong>.
+      ${srcNames.length?`<br>Galhos-base: <strong>${esc(srcNames.join(', '))}</strong>`:''}
+      <br><br>Dê um nome descritivo e escolha o peso com honestidade.
+    </div>
+    <label class="fl">Nome do fruto</label>
+    <input class="fi" type="text" id="craft-n" value="${esc(o.n+' — '+new Date().toISOString().slice(0,10))}"/>
+    <label class="fl">Peso (1–5)</label>
+    <div class="wv" id="wv-craft">
+      <div class="wd on" onclick="setW(1,'craft')">1</div>
+      <div class="wd" onclick="setW(2,'craft')">2</div>
+      <div class="wd" onclick="setW(3,'craft')">3</div>
+      <div class="wd" onclick="setW(4,'craft')">4</div>
+      <div class="wd" onclick="setW(5,'craft')">5</div>
+    </div>
+    <div class="wh" id="wh-craft" style="margin-bottom:10px">noção básica</div>
+    <label class="fl">Nota (opcional)</label>
+    <textarea class="fta" id="craft-note" style="min-height:56px" placeholder="O que criar me ensinou? O que descobri fazendo?"></textarea>
+    <div class="btn-row">
+      <button class="btn btn-gold" onclick="finalizeCraft()">Adicionar ao inventário</button>
+      <button class="btn btn-outline" onclick="closeModal()">Cancelar</button>
+    </div>`;
+}
+
+function finalizeCraft(){
+  const pc=G._pendingCraft;if(!pc)return;
+  const n=(document.getElementById('craft-n')?.value||'').trim()||'Fruto sem nome';
+  const note=(document.getElementById('craft-note')?.value||'').trim();
+  const firstSrc=pc.srcs[0]||null;
+  const firstSrcName=firstSrc?alive().find(i=>i.id===firstSrc)?.n||null:null;
+
+  const fruit=normalItem({
+    id:uid(),n,cat:'skill',w:G.craftW,note,
+    originId:firstSrc,origin:firstSrcName,
+    date:new Date().toISOString(),fruit:true,srcs:pc.srcs,outType:pc.typeId
+  });
+  G.items.push(fruit);
+  G.outputs.push({type:pc.typeId,date:fruit.date,srcs:[...pc.srcs]});
+
+  // count closed cycles: srcs that now have a fruit
+  const newCycles=pc.srcs.filter(id=>{
+    const item=alive().find(i=>i.id===id);
+    return item&&!item.fruit;
+  }).length;
+  G.cycles+=newCycles;
+
+  G.history.unshift({type:'create',a:'Fruto criado',d:fruit.n+' entrou no inventário',date:fruit.date});
+
+  // rule unlock for high complexity
+  let ruleUnlocked=null;
+  if(pc.cx>=5){
+    ruleUnlocked={id:'e'+uid(),t:'Regra conquistada — '+fruit.n,d:'Você criou algo de alta complexidade. Converse com o Claude para definir o que esta nova regra significa.',tag:'earned',origin:'Gerada ao criar: '+fruit.n};
+    G.rules.push(ruleUnlocked);
+    G.history.unshift({type:'rule',a:'Nova regra desbloqueada',d:ruleUnlocked.t,date:new Date().toISOString()});
+  }
+
+  G.craftW=1;G.selOut=null;G.selSrcs=[];G._pendingCraft=null;
+  save();updateTop();closeModal();renderCreate();renderInv();
+
+  if(ruleUnlocked){
+    setTimeout(()=>openModal(`<span class="mic">⭐</span><div class="mt">Nova regra desbloqueada</div><div class="mb">Você criou <strong>${esc(fruit.n)}</strong> — complexidade máxima. O jogo cresceu.<div class="hbox">${esc(ruleUnlocked.d)}</div></div><div class="btn-row"><button class="btn btn-outline" onclick="closeModal()">Fechar</button><button class="btn btn-gold" onclick="closeModal();nav('rules')">Ver regras</button></div>`),150);
+  }else if(newCycles>0){
+    setTimeout(()=>openModal(`<span class="mic">🔁</span><div class="mt">${newCycles} ciclo${newCycles>1?'s':''} fechado${newCycles>1?'s':''}!</div><div class="mb"><strong>${esc(fruit.n)}</strong> foi criado.<div class="hbox teal">Ciclos totais: ${G.cycles}. Continue aprendendo para abrir novos.</div></div><button class="btn btn-gold btn-full" onclick="closeModal()">Fechar</button>`),150);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// MODAL TEMPLATES
+// ═══════════════════════════════════════════════════════════════
+function modalItemAdded(item){
+  const c=cat(item.cat);
+  return `<span class="mic">${c.i}</span>
+    <div class="mt">"${esc(item.n)}" adicionado</div>
+    <div class="mb">
+      <strong>${c.l}</strong> · Peso ${item.w} — ${WLBL[item.w]}
+      ${item.origin?`<br>Ramificado de: <strong>${esc(item.origin)}</strong>`:''}
+      <br><br>Poder total: <strong>${pow()}</strong>
+      <div class="hbox" style="margin-top:9px;border-color:var(--cdim);background:var(--cbg);color:var(--coral)">Missão criada — crie algo a partir deste item para fechar o ciclo.</div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-outline" onclick="closeModal()">Ok</button>
+      <button class="btn btn-gold" onclick="closeModal();nav('create')">Criar agora ⚡</button>
+    </div>`;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// LIBRARY
+// ═══════════════════════════════════════════════════════════════
+function addBook(){
+  const title=document.getElementById('b-title').value.trim();if(!title)return;
+  const author=document.getElementById('b-author').value.trim();
+  const status=document.getElementById('b-status').value;
+  const note=document.getElementById('b-note').value.trim();
+  const book=normalBook({id:uid(),title,author,status,date:new Date().toISOString(),notes:[]});
+  if(note)book.notes.push({id:uid(),title:'Nota inicial',content:note,date:new Date().toISOString()});
+  G.books.push(book);
+  G.history.unshift({type:'book',a:'Livro adicionado',d:'"'+title+'"'+(author?' — '+author:''),date:new Date().toISOString()});
+  ['b-title','b-author','b-note'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('add-book-form').style.display='none';
+  save();updateTop();renderLib();
+}
+function renderLib(){
+  const ST={unread:'t-u',reading:'t-r',read:'t-d'};
+  const SL={unread:'não lido',reading:'lendo',read:'lido'};
+  const g=document.getElementById('lgrid');
+  if(!G.books.length){g.innerHTML='<div class="empty" style="grid-column:1/-1"><div class="ei">📚</div><p>Biblioteca vazia.</p></div>';return;}
+  g.innerHTML=G.books.map(b=>`<div class="bcard" onclick="openBook(${b.id})">
+    <div class="bt">${esc(b.title)}</div>
+    ${b.author?`<div class="ba">${esc(b.author)}</div>`:''}
+    <span class="btag ${ST[b.status]}">${SL[b.status]}</span>
+    <div class="bnc">${b.notes.length} anotaç${b.notes.length===1?'ão':'ões'}</div>
+  </div>`).join('');
+}
+function openBook(id){
+  G.curBook=id;const bk=G.books.find(b=>b.id===id);if(!bk)return;
+  document.getElementById('lib-list').style.display='none';
+  document.getElementById('book-detail').classList.add('open');
+  const ST={unread:'t-u',reading:'t-r',read:'t-d'};
+  const SL={unread:'não lido',reading:'lendo',read:'lido'};
+  document.getElementById('book-detail-content').innerHTML=`
+    <div style="margin-bottom:14px">
+      <div style="font-family:var(--fd);font-size:19px;font-weight:300;margin-bottom:3px">${esc(bk.title)}</div>
+      ${bk.author?`<div style="font-size:12px;color:var(--tx2);margin-bottom:7px">${esc(bk.author)}</div>`:''}
+      <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap">
+        <span class="btag ${ST[bk.status]}">${SL[bk.status]}</span>
+        <select onchange="updBookStatus(${bk.id},this.value)" style="background:var(--bg3);border:1px solid var(--b);border-radius:4px;color:var(--tx2);font-family:var(--fm);font-size:11px;padding:3px 6px;cursor:pointer">
+          <option value="unread" ${bk.status==='unread'?'selected':''}>não lido</option>
+          <option value="reading" ${bk.status==='reading'?'selected':''}>lendo</option>
+          <option value="read" ${bk.status==='read'?'selected':''}>lido</option>
+        </select>
+        <button class="btn btn-danger btn-sm" onclick="delBook(${bk.id})">Remover</button>
+      </div>
+    </div>
+    <div class="slabel">anotações</div>
+    ${bk.notes.map(n=>`<div class="ncard" onclick="openNote(${bk.id},${n.id})"><div class="nt">${esc(n.title)}</div><div class="np">${esc(n.content)}</div><div class="nd">${fmtD(n.date)}</div></div>`).join('')}
+    ${!bk.notes.length?'<div class="empty" style="padding:14px 0"><p>Nenhuma anotação ainda.</p></div>':''}
+    <button class="add-btn" style="margin-top:8px" onclick="openNewNote(${bk.id})">+ Nova anotação</button>`;
+}
+function closeBookDetail(){G.curBook=null;document.getElementById('lib-list').style.display='block';document.getElementById('book-detail').classList.remove('open');renderLib();}
+function updBookStatus(id,s){const b=G.books.find(x=>x.id===id);if(!b)return;b.status=s;save();if(G.curBook===id)openBook(id);}
+function delBook(id){if(!confirm('Remover este livro?'))return;G.books=G.books.filter(b=>b.id!==id);save();updateTop();closeBookDetail();}
+function openNote(bId,nId){
+  const bk=G.books.find(b=>b.id===bId);if(!bk)return;
+  const n=bk.notes.find(x=>x.id===nId);if(!n)return;
+  openModal(`<div class="mt" style="font-size:15px;margin-bottom:10px">${esc(n.title)}</div>
+    <label class="fl">Título</label><input class="fi" id="ne-t" value="${esc(n.title)}"/>
+    <label class="fl">Conteúdo</label><textarea class="fta" id="ne-c" style="min-height:130px">${esc(n.content)}</textarea>
+    <div class="btn-row">
+      <button class="btn btn-gold" onclick="saveNote(${bId},${nId})">Salvar</button>
+      <button class="btn btn-danger btn-sm" onclick="delNote(${bId},${nId})">Remover</button>
+      <button class="btn btn-outline" onclick="closeModal()">Fechar</button>
+    </div>`);
+}
+function openNewNote(bId){
+  openModal(`<div class="mt" style="font-size:15px;margin-bottom:10px">Nova anotação</div>
+    <label class="fl">Título</label><input class="fi" id="nn-t" placeholder="Ex: Análise estrutural — cap. 1"/>
+    <label class="fl">Conteúdo</label><textarea class="fta" id="nn-c" style="min-height:130px" placeholder="Escreva aqui…"></textarea>
+    <div class="btn-row">
+      <button class="btn btn-gold" onclick="createNote(${bId})">Criar</button>
+      <button class="btn btn-outline" onclick="closeModal()">Cancelar</button>
+    </div>`);
+  setTimeout(()=>document.getElementById('nn-t')?.focus(),60);
+}
+function createNote(bId){
+  const t=(document.getElementById('nn-t')?.value||'').trim()||'Sem título';
+  const c=(document.getElementById('nn-c')?.value||'').trim();
+  const bk=G.books.find(b=>b.id===bId);if(!bk)return;
+  bk.notes.push({id:uid(),title:t,content:c,date:new Date().toISOString()});
+  G.history.unshift({type:'book',a:'Anotação criada',d:'"'+t+'" em '+bk.title,date:new Date().toISOString()});
+  save();closeModal();if(G.curBook===bId)openBook(bId);
+}
+function saveNote(bId,nId){
+  const t=(document.getElementById('ne-t')?.value||'').trim()||'Sem título';
+  const c=(document.getElementById('ne-c')?.value||'').trim();
+  const bk=G.books.find(b=>b.id===bId);if(!bk)return;
+  const n=bk.notes.find(x=>x.id===nId);if(!n)return;
+  n.title=t;n.content=c;save();closeModal();if(G.curBook===bId)openBook(bId);
+}
+function delNote(bId,nId){
+  const bk=G.books.find(b=>b.id===bId);if(!bk)return;
+  bk.notes=bk.notes.filter(n=>n.id!==nId);
+  save();closeModal();if(G.curBook===bId)openBook(bId);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// RULES
+// ═══════════════════════════════════════════════════════════════
+function renderRules(){
+  const base=G.rules.filter(r=>r.tag==='base');
+  const earned=G.rules.filter(r=>r.tag==='earned');
+  const mat=G.maturing||[];
+  let h='<div class="slabel">regras base</div>'+base.map(r=>`<div class="rcard"><span class="rtag rb">base</span><div class="rtitle">${esc(r.t)}</div><div class="rdesc">${esc(r.d)}</div></div>`).join('');
+  if(earned.length)h+='<div class="slabel">regras conquistadas</div>'+earned.map(r=>`<div class="rcard earned"><span class="rtag re">conquistada</span><div class="rtitle">${esc(r.t)}</div><div class="rdesc">${esc(r.d)}</div>${r.origin?`<div class="rori">↳ ${esc(r.origin)}</div>`:''}</div>`).join('');
+  if(mat.length)h+='<div class="slabel">maturando</div>'+mat.map(r=>`<div class="rcard mat"><span class="rtag rm">maturando</span><div class="rtitle">${esc(r.t)}</div><div class="rdesc">${esc(r.d)}</div></div>`).join('');
+  document.getElementById('rules-container').innerHTML=h;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// HISTORY
+// ═══════════════════════════════════════════════════════════════
+function renderHist(){
+  const el=document.getElementById('hist-list');
+  if(!G.history.length){el.innerHTML='<div class="empty"><div class="ei">📜</div><p>Nenhuma ação ainda.</p></div>';return;}
+  el.innerHTML=G.history.map(h=>`<div class="hitem">
+    <div><div class="hdot ${h.type==='learn'?'hl':h.type==='create'?'hc':h.type==='rule'?'hr':'hb'}"></div></div>
+    <div style="flex:1"><div class="ha">${esc(h.a)}</div><div class="hd">${esc(h.d)}</div></div>
+    <div class="ht">${fmtT(h.date)}</div>
+  </div>`).join('');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// TRASH
+// ═══════════════════════════════════════════════════════════════
+function renderTrash(){
+  const el=document.getElementById('trash-list');if(!el)return;
+  if(!G.trash.length){el.innerHTML='<div class="empty" style="padding:16px 0"><p>Lixeira vazia.</p></div>';return;}
+  el.innerHTML=G.trash.map(it=>`<div class="titem">
+    <div class="tt">${esc(it.n)}</div>
+    <div class="tm">${cat(it.cat).l} · peso ${it.w} · ${fmtD(it.trashedAt||it.date)}</div>
+    <div class="btn-row"><button class="btn btn-gold btn-sm" onclick="restoreItem(${it.id})">Restaurar</button></div>
+  </div>`).join('');
+}
+function restoreItem(id){
+  const idx=G.trash.findIndex(i=>i.id===id);if(idx<0)return;
+  const it=G.trash.splice(idx,1)[0];it.trashed=false;delete it.trashedAt;
+  const mi=G.items.find(i=>i.id===id);
+  if(mi)mi.trashed=false;else G.items.push(it);
+  save();updateTop();renderTrash();renderInv();
+}
+function emptyTrash(){
+  if(!confirm('Apagar definitivamente?'))return;
+  G.items=G.items.filter(i=>!i.trashed);G.trash=[];
+  save();renderTrash();updateTop();renderInv();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// MODAL
+// ═══════════════════════════════════════════════════════════════
+function openModal(html){document.getElementById('mbox').innerHTML=html;document.getElementById('modal').classList.add('open');}
+function closeModal(){document.getElementById('modal').classList.remove('open');document.getElementById('mbox').innerHTML='';}
+
+// ═══════════════════════════════════════════════════════════════
+// DATA
+// ═══════════════════════════════════════════════════════════════
+function exportData(){
+  const blob=new Blob([JSON.stringify(G,null,2)],{type:'application/json;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download='krpg-'+new Date().toISOString().slice(0,10)+'.json';a.click();
+  setTimeout(()=>URL.revokeObjectURL(url),1200);
+}
+function importData(e){
+  const f=e.target.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=ev=>{
+    try{
+      const p=JSON.parse(ev.target.result);
+      if(!Array.isArray(p.items))throw new Error('formato inválido');
+      G={...G,...p,rules:p.rules||[...BASE_RULES],maturing:p.maturing||[...DEFAULT_MATURING],
+        items:(p.items||[]).map(normalItem),books:(p.books||[]).map(normalBook),
+        outputs:p.outputs||[],history:p.history||[],trash:(p.trash||[]).map(normalItem),
+        cycles:p.cycles||0,selSrcs:[],selOut:null,craftW:1,addW:1,
+        exSrcs:[],curExType:null,curExResult:null};
+      save();updateTop();nav('inventory');alert('Dados importados com sucesso!');
+    }catch(err){alert('Erro ao importar: '+err.message);}
+  };
+  r.readAsText(f);
+}
+function confirmClear(){
+  if(!confirm('Apagar TUDO permanentemente?'))return;
+  G={items:[],outputs:[],rules:[...BASE_RULES],maturing:[...DEFAULT_MATURING],history:[],books:[],trash:[],cycles:0,selOut:null,selSrcs:[],addW:1,craftW:1,curBook:null};
+  save();updateTop();nav('inventory');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// EXERCISE + AI
+// ═══════════════════════════════════════════════════════════════
+const EX_TYPES=[
+  {id:'explain',l:'Explicar',d:'Explique o conceito com suas próprias palavras, sem consultar nada'},
+  {id:'apply',l:'Aplicar',d:'Crie um exemplo prático real usando o que aprendeu'},
+  {id:'connect',l:'Conectar',d:'Encontre e articule a relação entre os itens selecionados'},
+  {id:'challenge',l:'Desafio',d:'Resolva um problema concreto usando esses conhecimentos'},
+  {id:'teach',l:'Ensinar',d:'Escreva como ensinaria isso para alguém que nunca viu'},
+];
+
+function buildInventoryContext(){
+  const items=alive();
+  if(!items.length)return 'Inventário vazio.';
+  const branches=items.filter(i=>!i.fruit);
+  const fruits=items.filter(i=>i.fruit);
+  let ctx=`INVENTÁRIO DO JOGADOR:\n`;
+  ctx+=`Poder total: ${pow()} | Ciclos fechados: ${G.cycles} | Débito: ${debt()}\n\n`;
+  ctx+=`GALHOS (${branches.length}):\n`;
+  branches.forEach(i=>{
+    ctx+=`- "${i.n}" [${cat(i.cat).l}, peso ${i.w}]`;
+    if(i.note)ctx+=` — nota: ${i.note.slice(0,80)}`;
+    if(i.origin)ctx+=` (originou de: ${i.origin})`;
+    ctx+='\n';
+  });
+  if(fruits.length){
+    ctx+=`\nFRUTOS (${fruits.length}):\n`;
+    fruits.forEach(i=>{
+      ctx+=`- "${i.n}" [peso ${i.w}]`;
+      const srcNames=(i.srcs||[]).map(id=>alive().find(x=>x.id===id)?.n).filter(Boolean);
+      if(srcNames.length)ctx+=` — criado a partir de: ${srcNames.join(', ')}`;
+      ctx+='\n';
+    });
+  }
+  return ctx;
+}
+
+function renderExercise(){
+  const grid=document.getElementById('ex-item-grid');
+  if(!alive().length){
+    grid.innerHTML='<div class="empty" style="grid-column:1/-1"><div class="ei">🧪</div><p>Adicione itens ao inventário para gerar exercícios.</p></div>';
+    document.getElementById('ex-type-row').style.display='none';
+    document.getElementById('ex-panel').innerHTML='';
+    document.getElementById('ex-to-fruit-area').style.display='none';
+    return;
+  }
+  grid.innerHTML=alive().map(it=>{
+    const sel=G.exSrcs.includes(it.id);
+    const c=cat(it.cat);
+    return `<div class="ex-chip${sel?' sel':''}" onclick="toggleExSrc(${it.id})">
+      <div class="ec-check">✓</div>
+      <div class="ec-name">${it.fruit?'🍒 ':c.i+' '}${esc(it.n)}</div>
+      <div class="ec-meta">${it.fruit?'Fruto':c.l} · +${it.w}</div>
+    </div>`;
+  }).join('');
+  updateExTypeRow();
+}
+
+function toggleExSrc(id){
+  const i=G.exSrcs.indexOf(id);
+  i>=0?G.exSrcs.splice(i,1):G.exSrcs.push(id);
+  renderExercise();
+  if(G.exSrcs.length>0)triggerExSuggestion();
+}
+
+function updateExTypeRow(){
+  const row=document.getElementById('ex-type-row');
+  const btns=document.getElementById('ex-type-btns');
+  if(!G.exSrcs.length){row.style.display='none';return;}
+  row.style.display='block';
+  btns.innerHTML=EX_TYPES.map(t=>`<button class="btn btn-sm ${G.curExType===t.id?'btn-outline':'btn-outline'}" 
+    style="${G.curExType===t.id?'border-color:var(--pur);color:var(--pur);background:var(--pbg)':''}"
+    onclick="selectExType('${t.id}')" title="${esc(t.d)}">${t.l}</button>`).join('');
+}
+
+function selectExType(typeId){
+  G.curExType=typeId;
+  updateExTypeRow();
+  generateExercise();
+}
+
+let _exDebounce=null;
+function triggerExSuggestion(){
+  clearTimeout(_exDebounce);
+  _exDebounce=setTimeout(()=>{
+    if(G.exSrcs.length>0&&!G.curExType)suggestExType();
+  },600);
+}
+
+async function suggestExType(){
+  const panel=document.getElementById('ex-panel');
+  panel.innerHTML='<div class="ex-panel"><div class="ex-loading"><div class="ex-spinner"></div>A IA está analisando os itens selecionados…</div></div>';
+  const selectedItems=G.exSrcs.map(id=>alive().find(i=>i.id===id)).filter(Boolean);
+  const itemList=selectedItems.map(i=>`"${i.n}" (${cat(i.cat).l}, peso ${i.w}${i.note?', nota: '+i.note.slice(0,60):''})${i.origin?', originou de '+i.origin:''}`).join('\n');
+  const prompt=`Você é o assistente de um sistema de aprendizado gamificado chamado KnowledgeRPG.
+
+O usuário selecionou estes itens do inventário para praticar:
+${itemList}
+
+Com base nesses assuntos reais, sugira qual seria o MELHOR tipo de exercício entre estas opções:
+- Explicar: escrever o conceito com as próprias palavras
+- Aplicar: criar um exemplo prático real
+- Conectar: articular a relação entre os itens
+- Desafio: resolver um problema concreto
+- Ensinar: escrever como ensinaria para outra pessoa
+
+Responda em português, de forma concisa (3-4 linhas), explicando sua sugestão e por que faz sentido para esses itens específicos. Não use markdown, não use listas, não use headers.`;
+
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:300,messages:[{role:'user',content:prompt}]})
+    });
+    const data=await res.json();
+    const text=data.content?.map(b=>b.text||'').join('')||'';
+    panel.innerHTML=`<div class="ex-panel">
+      <h3>💡 Sugestão da IA</h3>
+      <div class="ex-suggestion">${esc(text)}</div>
+      <div class="slabel" style="margin-top:12px">escolha um tipo para gerar o exercício</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">
+        ${EX_TYPES.map(t=>`<button class="btn btn-outline btn-sm" onclick="selectExType('${t.id}')">${t.l}</button>`).join('')}
+      </div>
+    </div>`;
+  }catch(e){
+    panel.innerHTML=`<div class="ex-panel"><div class="ex-suggestion"><b>Sem conexão com a IA.</b> Escolha um tipo de exercício manualmente acima.</div></div>`;
+  }
+}
+
+async function generateExercise(){
+  const panel=document.getElementById('ex-panel');
+  const toFruit=document.getElementById('ex-to-fruit-area');
+  toFruit.style.display='none';
+  G.curExResult=null;
+  panel.innerHTML='<div class="ex-panel"><div class="ex-loading"><div class="ex-spinner"></div>Gerando exercício…</div></div>';
+  const selectedItems=G.exSrcs.map(id=>alive().find(i=>i.id===id)).filter(Boolean);
+  const type=EX_TYPES.find(t=>t.id===G.curExType);
+  const itemList=selectedItems.map(i=>`- "${i.n}" (${cat(i.cat).l}, peso ${i.w}${i.note?', contexto: '+i.note.slice(0,100):''})${i.origin?', originou de: '+i.origin:''}`).join('\n');
+  const prompt=`Você é o assistente de um sistema de aprendizado gamificado chamado KnowledgeRPG.
+
+O usuário quer praticar com estes itens do inventário:
+${itemList}
+
+Tipo de exercício escolhido: ${type?.l} — ${type?.d}
+
+Gere um exercício prático, específico e relevante para esses assuntos reais. O exercício deve:
+- Ser concreto e realizável (não abstrato demais)
+- Usar os assuntos específicos dos itens selecionados
+- Ter uma instrução clara do que fazer
+- Ter critérios simples de avaliação (como o usuário sabe que fez bem?)
+- Ter duração estimada de 10-30 minutos
+
+Formato: escreva apenas o exercício em si. Sem introduções, sem markdown, sem headers. Comece direto com a instrução.`;
+
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:600,messages:[{role:'user',content:prompt}]})
+    });
+    const data=await res.json();
+    const text=data.content?.map(b=>b.text||'').join('')||'';
+    G.curExResult={text,type:type?.l,items:selectedItems.map(i=>i.n)};
+    panel.innerHTML=`<div class="ex-panel">
+      <h3>${type?.l} — exercício gerado</h3>
+      <div class="ex-content">${esc(text)}</div>
+      <div class="btn-row" style="margin-top:12px">
+        <button class="btn btn-outline btn-sm" onclick="generateExercise()">Gerar outro ↻</button>
+      </div>
+    </div>`;
+    toFruit.style.display='block';
+  }catch(e){
+    panel.innerHTML=`<div class="ex-panel"><div class="ex-suggestion"><b>Erro ao gerar exercício.</b> Verifique sua conexão e tente novamente.</div></div>`;
+  }
+}
+
+async function refreshInsights(){
+  const content=document.getElementById('ai-insights-content');
+  content.innerHTML='<div class="ex-loading"><div class="ex-spinner"></div>Analisando inventário…</div>';
+  const ctx=buildInventoryContext();
+  const prompt=`Você é o assistente de um sistema de aprendizado gamificado chamado KnowledgeRPG. Analise o inventário abaixo e gere 3 insights curtos e úteis para o usuário.
+
+${ctx}
+
+Cada insight deve ser uma observação específica sobre o inventário: conexões que o usuário pode não ter percebido, itens que poderiam ser combinados em um exercício, lacunas no aprendizado, ou sugestões de próximos passos.
+
+Formato: 3 insights separados por linha em branco. Cada um começa com uma palavra-chave em negrito (use ** antes e depois da palavra) seguida de dois pontos e a observação. Máximo 2 linhas por insight. Sem introdução, sem conclusão, sem numeração.`;
+
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:400,messages:[{role:'user',content:prompt}]})
+    });
+    const data=await res.json();
+    const text=data.content?.map(b=>b.text||'').join('')||'';
+    const insights=text.split(/\n\n+/).filter(s=>s.trim());
+    content.innerHTML=insights.map(ins=>{
+      const formatted=esc(ins.trim()).replace(/\*\*([^*]+)\*\*/g,'<b>$1</b>');
+      return `<div class="ai-insight">${formatted}</div>`;
+    }).join('');
+  }catch(e){
+    content.innerHTML='<div class="ai-empty">Sem conexão com a IA. Tente novamente.</div>';
+  }
+}
+
+function exToFruit(){
+  if(!G.curExResult)return;
+  const srcs=G.exSrcs.filter(id=>alive().find(i=>i.id===id));
+  const firstSrc=srcs[0]||null;
+  const firstName=firstSrc?alive().find(i=>i.id===firstSrc)?.n||null:null;
+  openModal(`<span class="mic">🍒</span>
+    <div class="mt">Transformar em fruto</div>
+    <div class="mb">O exercício <strong>${esc(G.curExResult.type)}</strong> vai entrar no inventário como um fruto.
+    <br><br>Dê um nome e escolha o peso com honestidade — quanto esse exercício avançou seu domínio?</div>
+    <label class="fl">Nome do fruto</label>
+    <input class="fi" type="text" id="exf-name" value="${esc('Exercício '+G.curExResult.type+' — '+new Date().toISOString().slice(0,10))}"/>
+    <label class="fl">Peso (1–5)</label>
+    <div class="wv" id="wv-exf">
+      <div class="wd on" onclick="setW(1,'exf')">1</div>
+      <div class="wd" onclick="setW(2,'exf')">2</div>
+      <div class="wd" onclick="setW(3,'exf')">3</div>
+      <div class="wd" onclick="setW(4,'exf')">4</div>
+      <div class="wd" onclick="setW(5,'exf')">5</div>
+    </div>
+    <div class="wh" id="wh-exf" style="margin-bottom:10px">noção básica</div>
+    <div class="btn-row">
+      <button class="btn btn-gold" onclick="finalizeExFruit()">Adicionar ao inventário</button>
+      <button class="btn btn-outline" onclick="closeModal()">Cancelar</button>
+    </div>`);
+  G._exFruitSrcs=srcs;G._exFruitOrigin=firstName;G._exFruitW=1;
+}
+
+function finalizeExFruit(){
+  const n=(document.getElementById('exf-name')?.value||'').trim()||'Exercício sem nome';
+  const firstSrc=G._exFruitSrcs?.[0]||null;
+  const fruit=normalItem({
+    id:uid(),n,cat:'skill',w:G.craftW,note:'Fruto de exercício ('+G.curExResult?.type+')',
+    originId:firstSrc,origin:G._exFruitOrigin,
+    date:new Date().toISOString(),fruit:true,
+    srcs:G._exFruitSrcs||[],outType:'exercise'
+  });
+  G.items.push(fruit);
+  const newCycles=(G._exFruitSrcs||[]).filter(id=>{const it=alive().find(i=>i.id===id);return it&&!it.fruit;}).length;
+  G.cycles+=newCycles;
+  G.history.unshift({type:'create',a:'Fruto de exercício',d:fruit.n+' entrou no inventário',date:fruit.date});
+  G.curExResult=null;G._exFruitSrcs=null;G._exFruitOrigin=null;
+  document.getElementById('ex-to-fruit-area').style.display='none';
+  closeModal();save();updateTop();renderInv();renderExercise();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// KEYBOARD + RESIZE
+// ═══════════════════════════════════════════════════════════════
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
+window.addEventListener('resize',schedTree);
+
+// ═══════════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════════
+load();renderInv();updateTop();
+</script>
+</body>
+</html>
